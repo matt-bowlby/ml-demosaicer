@@ -1,0 +1,61 @@
+<div id="gaussian-explorer">
+<h3>Gaussian restricted to [0, 1]</h3>
+<div class="viz-controls">
+<label class="form-label">Center <output id="g-center-value" class="tabular-nums"></output><input id="g-center" class="form-range" type="range" min="0" max="1" step="0.01" value="0.8"></label>
+<label class="form-label">Width (standard deviation) <output id="g-width-value" class="tabular-nums"></output><input id="g-width" class="form-range" type="range" min="0.01" max="1" step="0.01" value="0.1"></label>
+<label class="form-label">Interval start <output id="g-start-value" class="tabular-nums"></output><input id="g-start" class="form-range" type="range" min="0" max="1" step="0.01" value="0.7"></label>
+<label class="form-label">Interval end <output id="g-end-value" class="tabular-nums"></output><input id="g-end" class="form-range" type="range" min="0" max="1" step="0.01" value="0.9"></label>
+</div>
+<div id="g-plot"><svg class="g-chart" role="img" aria-label="Normalized Gaussian density; shaded area is the probability of the selected interval"></svg></div>
+<div id="g-result" class="tabular-nums" aria-live="polite"></div>
+<code id="g-code"></code>
+<style>
+#gaussian-explorer .g-chart {display:block;width:100%;height:290px;overflow:visible}
+#gaussian-explorer .g-chart text {fill:var(--foreground);font-size:12px}
+#gaussian-explorer .g-chart .domain, #gaussian-explorer .g-chart .tick line {stroke:var(--border)}
+</style>
+<script src="https://cdn.jsdelivr.net/npm/d3@7.9.0/dist/d3.min.js"></script>
+<script>
+(() => {
+const root=document.getElementById('gaussian-explorer');
+const keys=['center','width','start','end'];
+const inputs=Object.fromEntries(keys.map(k=>[k,root.querySelector('#g-'+k)]));
+function cdf(x) {
+ const sign=x<0?-1:1, z=Math.abs(x)/Math.SQRT2, t=1/(1+0.3275911*z);
+ const erf=1-(((((1.061405429*t-1.453152027)*t)+1.421413741)*t-0.284496736)*t+0.254829592)*t*Math.exp(-z*z);
+ return (1+sign*erf)/2;
+}
+function draw(){
+ const v=Object.fromEntries(keys.map(k=>[k,+inputs[k].value]));
+ keys.forEach(k=>root.querySelector('#g-'+k+'-value').textContent=v[k].toFixed(2));
+ const lo=Math.min(v.start,v.end), hi=Math.max(v.start,v.end);
+ const norm=cdf((1-v.center)/v.width)-cdf(-v.center/v.width);
+ const pdf=x=>Math.exp(-0.5*((x-v.center)/v.width)**2)/(v.width*Math.sqrt(2*Math.PI)*norm);
+ const data=d3.range(1001).map(i=>({x:i/1000,y:pdf(i/1000)}));
+ const width=root.querySelector('#g-plot').getBoundingClientRect().width || 640, height=290;
+ const left=64,right=18,top=20,bottom=52;
+ const svg=d3.select(root.querySelector('svg')).attr('viewBox',`0 0 ${width} ${height}`);svg.selectAll('*').remove();
+ const x=d3.scaleLinear().domain(d3.extent(data,d=>d.x)).range([left,width-right]);
+ const extent=d3.extent(data,d=>d.y);
+ const y=d3.scaleLinear().domain([0,extent[1]*1.08]).range([height-bottom,top]);
+ svg.append('rect').attr('data-chart-frame','').attr('x',left).attr('y',top).attr('width',width-left-right).attr('height',height-bottom-top).attr('fill','none').attr('stroke','var(--border)');
+ const shaded=[{x:lo,y:pdf(lo)},...data.filter(d=>d.x>lo&&d.x<hi),{x:hi,y:pdf(hi)}];
+ svg.append('path').datum(shaded).attr('d',d3.area().x(d=>x(d.x)).y0(y(0)).y1(d=>y(d.y))).attr('fill','var(--viz-series-1)').attr('opacity',0.22);
+ svg.append('path').datum(data).attr('d',d3.line().x(d=>x(d.x)).y(d=>y(d.y))).attr('fill','none').attr('stroke','var(--viz-series-1)').attr('stroke-width',2);
+ svg.append('g').attr('transform',`translate(0,${height-bottom})`).call(d3.axisBottom(x).ticks(width<400?3:5));
+ svg.append('g').attr('transform',`translate(${left},0)`).call(d3.axisLeft(y).ticks(4));
+ svg.append('text').attr('class','axis-title').attr('data-axis','x').attr('x',(left+width-right)/2).attr('y',height-8).attr('text-anchor','middle').text('Sample value');
+ svg.append('text').attr('class','axis-title').attr('data-axis','y').attr('transform',`translate(16,${(top+height-bottom)/2}) rotate(-90)`).attr('text-anchor','middle').text('Probability density');
+ const chance=(cdf((hi-v.center)/v.width)-cdf((lo-v.center)/v.width))/norm;
+ root.querySelector('#g-result').textContent=`Chance of ${lo.toFixed(2)}–${hi.toFixed(2)}: ${(chance*100).toFixed(1)}%`;
+ root.querySelector('#g-code').textContent=`rngd(center=${v.center.toFixed(2)}, width=${v.width.toFixed(2)})`;
+ const labels=svg.selectAll('.tick text, .axis-title').nodes();
+ labels.forEach(el=>el.getBoundingClientRect());
+}
+function restore(s){const v=s?.modelContent;if(v)keys.forEach(k=>{if(Number.isFinite(v[k])&&v[k]>=+inputs[k].min&&v[k]<=+inputs[k].max)inputs[k].value=v[k];});draw();}
+keys.forEach(k=>inputs[k].addEventListener('input',()=>{draw();window.openai?.setWidgetState({modelContent:Object.fromEntries(keys.map(k=>[k,+inputs[k].value])),privateContent:null}).catch(()=>{});}));
+window.addEventListener('openai:set_globals',e=>{if(e.detail?.globals?.widgetState)restore(e.detail.globals.widgetState);});
+restore(window.openai?.widgetState);new ResizeObserver(draw).observe(root.querySelector('#g-plot'));
+})();
+</script>
+</div>
