@@ -23,7 +23,6 @@ def generate_image(rng: Generator, width: int, height: int) -> np.ndarray:
     # Pick image type
     color_types = list(ColorType)
     image_type = color_types[int(rng.integers(len(color_types)))]
-    print(image_type)
 
     # Background
     num_bgs = int(rng.integers(1, 8))
@@ -42,7 +41,6 @@ def generate_image(rng: Generator, width: int, height: int) -> np.ndarray:
 
     # Shapes
     num_shapes = int(rngd(rng, 0.5, 1.5) * max(width, height) / 8)
-    print(num_shapes)
     for _ in range(num_shapes):
         shape = _random_shape(rng, width, height)
         fill = _random_fill(image_type, rng, width, height)

@@ -5,10 +5,9 @@ import matplotlib.pyplot as plt
 from generate_image import generate_image
 
 def main():
-    # print("running!")
     rng = np.random.default_rng(42)
 
-    _, axes = plt.subplots(2, 3, figsize=(12, 6))
+    _, axes = plt.subplots(3, 4, figsize=(12, 6))
 
     for ax in axes.flat:
         image = generate_image(rng, 400, 250)
