@@ -2,7 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 # from tests.showcase import show_fill_tests, show_shape_tests
-from generate_image import generate_image
+from generate_image.v1 import generate_image
 
 def main():
     rng = np.random.default_rng(42)

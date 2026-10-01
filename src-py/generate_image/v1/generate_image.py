@@ -49,9 +49,6 @@ def generate_image(rng: Generator, width: int, height: int) -> np.ndarray:
     return img
 
 
-
-
-
 def _random_even_color(rng: Generator) -> np.ndarray:
     return rng.random((3,))
 

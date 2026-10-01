@@ -6,7 +6,7 @@ from collections import Counter
 import matplotlib.pyplot as plt
 import numpy as np
 
-from ..generate_image import fills, shapes
+from ..generate_image.v1 import fills, shapes
 
 
 def shape_cases():
