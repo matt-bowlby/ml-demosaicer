@@ -6,13 +6,13 @@ class Demosaicer(nn.Module):
 
     def __init__(self):
         super().__init__()
-        self.layer_1 = nn.Conv2d(3, 32, 3, padding=1)
+        self.layer_1 = nn.Conv2d(3, 32, 3, padding=1, padding_mode="reflect")
         self.layer_2 = nn.LeakyReLU()
-        self.layer_3 = nn.Conv2d(32, 64, 3, padding=1)
+        self.layer_3 = nn.Conv2d(32, 64, 3, padding=1, padding_mode="reflect")
         self.layer_4 = nn.LeakyReLU()
-        self.layer_5 = nn.Conv2d(64, 32, 3, padding=1)
+        self.layer_5 = nn.Conv2d(64, 32, 3, padding=1, padding_mode="reflect")
         self.layer_6 = nn.LeakyReLU()
-        self.layer_7 = nn.Conv2d(32, 3, 3, padding=1)
+        self.layer_7 = nn.Conv2d(32, 3, 3, padding=1, padding_mode="reflect")
 
     def forward(self, x):
         result = self.layer_1(x)

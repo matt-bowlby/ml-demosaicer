@@ -8,7 +8,7 @@
     "max_generations_per_seed": 50000,
     "learning_rate": 0.01,
     "batch_size": 1,
-    "batch_num": 10000,
+    "batch_num": 50000,
     "image_generation_version": 1,
     "weight_seed": 42,
     "training_seed": 42,
