@@ -6,7 +6,8 @@ from collections import Counter
 import matplotlib.pyplot as plt
 import numpy as np
 
-from ..generate_image.v1 import fills, shapes
+from generate_image.v1 import fills, shapes
+from generate_image.v1.layer import layer
 
 
 def shape_cases():
@@ -34,10 +35,10 @@ def shape_cases():
         ("parallelogram", "Rotated", dict(side_a=95, side_b=90, base_height=85, angle=-np.pi / 4)),
         ("trapezoid", "Symmetric", dict(base_a=170, base_b=80, base_height=100, base_offset=45, angle=0)),
         ("trapezoid", "Offset and rotated", dict(base_a=100, base_b=150, base_height=80, base_offset=-65, angle=np.pi / 6)),
-        ("star", "Deep notches", dict(inner_radius=28, outer_radius=95, angle=0)),
-        ("star", "Broad rotated tips", dict(inner_radius=55, outer_radius=85, angle=np.pi / 5)),
-        ("regular_polygon", "Pentagon", dict(radius=90, num_points=5, angle=0)),
-        ("regular_polygon", "Rotated octagon", dict(radius=75, num_points=8, angle=np.pi / 8)),
+        ("star", "Deep notches", dict(inner_radius=28, outer_radius=95, points=5, angle=0)),
+        ("star", "Broad rotated tips", dict(inner_radius=55, outer_radius=85, points=5, angle=np.pi / 5)),
+        ("regular_polygon", "Pentagon", dict(radius=90, num_sides=5, angle=0)),
+        ("regular_polygon", "Rotated octagon", dict(radius=75, num_sides=8, angle=np.pi / 8)),
         ("polygon", "Irregular convex boundary", dict(
             points=np.array([[0, 0], [120, -20], [150, 70], [70, 130], [-20, 80]]), angle=0)),
         ("polygon", "Concave arrow", dict(
@@ -66,21 +67,20 @@ def show_shape_tests(show: bool = True) -> None:
     # Validate everything before opening windows, so a failure leaves no partial gallery.
     results = []
     for name, description, parameters in cases:
-        arguments = dict(x=128, y=128, width=256, height=256)
-        arguments.update(parameters)
+        arguments = dict(parameters)
+        center = (arguments.pop("x", 128), arguments.pop("y", 128))
         img = getattr(shapes, name)(**arguments)
         label = f"{name}: {description}"
-        assert img.shape == (256, 256, 3), f"{label}: unexpected shape"
+        assert img.ndim == 3 and img.shape[2] == 1, f"{label}: unexpected shape"
         assert img.dtype == np.float32, f"{label}: unexpected dtype"
         assert np.all(np.isfinite(img)), f"{label}: nonfinite pixels"
-        assert img.min() == 0 and img.max() == 1, f"{label}: expected black and white pixels"
+        assert img.max() == 1, f"{label}: expected black and white pixels"
         assert np.all((img >= 0) & (img <= 1)), f"{label}: pixels outside [0, 1]"
-        assert np.array_equal(img[:, :, 0], img[:, :, 1]), f"{label}: RGB channels differ"
-        assert np.array_equal(img[:, :, 0], img[:, :, 2]), f"{label}: RGB channels differ"
-        results.append((label, img, arguments))
-        print(f"PASS {label}")
+        canvas = np.zeros((256, 256, 3), dtype=np.float32)
+        fill = np.ones((*img.shape[:2], 3), dtype=np.float32)
+        layer(canvas, img, fill, center=center)
+        results.append((label, canvas, dict(x=center[0], y=center[1])))
 
-    print(f"Passed {len(results)} examples across {len(counts)} shapes.", flush=True)
     if not show:
         return
 
@@ -149,13 +149,16 @@ def show_fill_tests(show: bool = True) -> None:
     assert set(counts) == public_fills, "Update showcase cases to cover every fill"
     assert all(count >= 2 for count in counts.values())
 
-    mask = shapes.square(radius=140, angle=0, x=128, y=128, width=256, height=256)
+    mask = shapes.square(radius=140, angle=0)
+    box_height, box_width = mask.shape[:2]
     results = []
     for name, description, parameters in cases:
-        arguments = dict(width=256, height=256, **parameters)
+        arguments = dict(width=box_width, height=box_height, **parameters)
+        if name == "noise":
+            arguments["rng"] = np.random.default_rng(arguments.pop("seed"))
         fill = getattr(fills, name)(**arguments)
         label = f"{name}: {description}"
-        assert fill.shape == (256, 256, 3), f"{label}: unexpected shape"
+        assert fill.shape == (box_height, box_width, 3), f"{label}: unexpected shape"
         assert fill.dtype == np.float32, f"{label}: unexpected dtype"
         assert np.all(np.isfinite(fill)), f"{label}: nonfinite pixels"
         assert np.all((fill >= 0) & (fill <= 1)), f"{label}: pixels outside [0, 1]"
@@ -164,12 +167,13 @@ def show_fill_tests(show: bool = True) -> None:
         else:
             assert np.any(np.ptp(fill, axis=(0, 1)) > 0), f"{label}: expected spatial variation"
         if name in {"noise", "smooth_noise"}:
-            assert np.array_equal(fill, getattr(fills, name)(**arguments)), f"{label}: seed is not reproducible"
+            repeat = dict(arguments)
+            if name == "noise":
+                repeat["rng"] = np.random.default_rng(parameters["seed"])
+            assert np.array_equal(fill, getattr(fills, name)(**repeat)), f"{label}: seed is not reproducible"
         img = fill * mask + np.float32(0.15) * (1 - mask)
         results.append((label, img))
-        print(f"PASS {label}")
 
-    print(f"Passed {len(results)} examples across {len(counts)} fills.", flush=True)
     if not show:
         return
 
