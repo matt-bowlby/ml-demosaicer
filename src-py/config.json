@@ -6,11 +6,13 @@
     "testing_range_start": 2000000,
     "testing_range_end": 2999999,
     "max_generations_per_seed": 50000,
-    "learning_rate": 0.01,
-    "batch_size": 1,
-    "batch_num": 50000,
+    "learning_rate": 0.005,
+    "batch_size": 5,
+    "batch_num": 10000,
+    "epoch_num": 2,
     "image_generation_version": 1,
     "weight_seed": 42,
     "training_seed": 42,
-    "single_image": true
+    "single_image": false,
+    "eval_num": 2000
 }

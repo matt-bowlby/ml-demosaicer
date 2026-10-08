@@ -20,10 +20,12 @@ class TrainConfig:
             self.learning_rate = config.get("learning_rate")
             self.batch_size = config.get("batch_size")
             self.batch_num = config.get("batch_num")
+            self.epoch_num = config.get("epoch_num")
             self.image_generation_version = config.get("image_generation_version")
             self.weight_seed = config.get("weight_seed")
             self.training_seed = config.get("training_seed")
             self.single_image = config.get("single_image")
+            self.eval_num = config.get("eval_num")
 
 
         with open(runs_path, "r", encoding="utf-8") as file:
