@@ -5,6 +5,7 @@ import torch
 from config import TrainConfig
 from .model import Demosaicer
 from learning.dataset import RawDataset, SingleImageDataset
+from .result import TrainResult
 
 from debug import start, stop, reset
 

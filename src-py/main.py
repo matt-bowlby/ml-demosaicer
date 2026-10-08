@@ -31,8 +31,9 @@ def main():
         rng = np.random.default_rng()
         seed = rng.integers(config.testing_range_start, config.testing_range_end)
         rng = np.random.default_rng(seed)
-    img = generate_image(rng, 32, 32, 1)
-    mosaic = bayer_mosaic(img, "RGGB")
+    # img = generate_image(rng, 32, 32, 1)
+    # mosaic = bayer_mosaic(img, "RGGB")
+    # predict(model, mosaic, img)
 
     eval_loader = EvalDataset(config)
     eval_result = evaluate(model, eval_loader, config)
