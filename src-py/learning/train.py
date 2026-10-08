@@ -26,7 +26,9 @@ def train(config: TrainConfig):
 
     # Initialize optimizer and loss function
     optimizer = torch.optim.Adam(model.parameters(), config.learning_rate)
-    loss_function = nn.MSELoss()
+    loss_function = nn.L1Loss()
+
+    result = TrainResult()
 
     reset()
 
@@ -46,6 +48,8 @@ def train(config: TrainConfig):
         prediction = model(x)
         # Calculate distance from correct answer
         loss = loss_function(prediction, y)
+        with torch.no_grad():
+            result.measure(x, prediction, y)
         # Calculate loss gradient
         loss.backward()
         # Step the optimizer toward the correct answer
@@ -55,5 +59,5 @@ def train(config: TrainConfig):
         config.update_run(seed, x.shape[0], None, config.image_generation_version)
         start(f"Generate Images for batch {batch}")
 
-    return model, config
+    return model, result, config
 
