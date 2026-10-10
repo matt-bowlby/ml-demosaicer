@@ -62,6 +62,9 @@ class EvalResult:
     def worst_predictions(self) -> list:
         return list(self._worst_predictions)
 
+    def mean_mae(self) -> float:
+        return torch.tensor(self._loss).mean().item()
+
     def mean_psnr(self) -> float:
         psnr = torch.cat(self._psnr)
         return psnr.mean().item()
@@ -117,6 +120,7 @@ class EvalResult:
             (self.mean_mae_rgb()[0], "Red MAE"),
             (self.mean_mae_rgb()[1], "Green MAE"),
             (self.mean_mae_rgb()[2], "Blue MAE"),
+            (self.mean_mae(), "Overall MAE")
         ]
         for ax, (value, title) in zip(loss_stats.flatten(), values):
             ax.text(
