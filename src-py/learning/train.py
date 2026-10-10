@@ -6,6 +6,7 @@ from config import TrainConfig
 from .model import Demosaicer
 from learning.dataset import RawDataset, SingleImageDataset
 from .result import TrainResult
+from.loss import reconstruction_loss
 
 from debug import start, stop, reset
 
@@ -27,38 +28,40 @@ def train(config: TrainConfig):
 
     # Initialize optimizer and loss function
     optimizer = torch.optim.Adam(model.parameters(), config.learning_rate)
-    loss_function = nn.L1Loss()
+    loss_function = reconstruction_loss
+    # loss_function = nn.L1Loss()
 
     result = TrainResult()
 
-    reset()
+    # reset()
 
-    batch = 1
-    start("Generate images for batch 1")
-    for x, y, seed in data_loader:
-        stop()
-        start(f"Batch {batch}")
-        batch += 1
+    for _ in range(config.epoch_num):
+        # batch = 1
+        # start("Generate images for batch 1")
+        for x, y, seed in data_loader:
+            # stop()
+            # start(f"Batch {batch}")
+            # batch += 1
 
-        x = x.to(device=device, dtype=torch.float32)
-        y = y.to(device=device, dtype=torch.float32)
+            x = x.to(device=device, dtype=torch.float32)
+            y = y.to(device=device, dtype=torch.float32)
 
-        # Clear last gradient; otherwise PyTorch accumulates gradients
-        optimizer.zero_grad()
-        # Make prediction
-        prediction = model(x)
-        # Calculate distance from correct answer
-        loss = loss_function(prediction, y)
-        with torch.no_grad():
-            result.measure(x, prediction, y)
-        # Calculate loss gradient
-        loss.backward()
-        # Step the optimizer toward the correct answer
-        optimizer.step()
+            # Clear last gradient; otherwise PyTorch accumulates gradients
+            optimizer.zero_grad()
+            # Make prediction
+            prediction = model(x)
+            # Calculate distance from correct answer
+            loss = loss_function(prediction, y)
+            with torch.no_grad():
+                result.measure(x, prediction, y)
+            # Calculate loss gradient
+            loss.backward()
+            # Step the optimizer toward the correct answer
+            optimizer.step()
 
-        stop()
-        config.update_run(seed, x.shape[0], None, config.image_generation_version)
-        start(f"Generate Images for batch {batch}")
+            # stop()
+            config.update_run(seed, x.shape[0], None, config.image_generation_version)
+            # start(f"Generate Images for batch {batch}")
 
     return model, result, config
 
