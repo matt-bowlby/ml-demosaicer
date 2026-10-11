@@ -30,7 +30,7 @@ def generate_image(rng: Generator, width: int, height: int,
         img *= 1 - opacity
         img += fill * opacity
 
-    num_shapes = int(rngd(rng, 0.5, 1.5) * max(width, height) / 8)
+    num_shapes = int(rngd(rng, 0.5, 1.5) * (max(max(width, height) / 8, 10)))
     for _ in range(num_shapes):
         shape = _random_shape(rng, min_size, max_size)
         box_height, box_width = shape.shape[:2]
@@ -361,6 +361,6 @@ def _random_fill(type: ColorType, rng: Generator, width: int, height: int, min_s
     generators = (
         _random_solid, _random_linear_gradient, _random_radial_gradient,
         _random_stripes, _random_checkerboard, _random_sinusoidal_grating,
-        _random_noise, _random_smooth_noise,
+        _random_smooth_noise,
     )
     return generators[int(rng.integers(len(generators)))](type, rng, width, height, min_size, max_size)
