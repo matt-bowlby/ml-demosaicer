@@ -4,11 +4,11 @@ import matplotlib.pyplot as plt
 from torch.utils.data import DataLoader
 
 from generate_image.generate import to_HWC
-from config import TrainConfig
+
 from .result import EvalResult
 
 
-def predict(model, bayer_mosaic, answer, display: bool = True) -> np.ndarray:
+def predict(model, bayer_mosaic: np.ndarray, answer: np.ndarray, display: bool = True) -> np.ndarray:
     model.eval()
     parameter = next(model.parameters())
     mosaic = torch.as_tensor(
@@ -50,23 +50,17 @@ def compare(a, b) -> np.ndarray:
     return np.clip(error_vis, 0, 1)
 
 
-def evaluate(model, eval_loader, config: TrainConfig):
-    parameter = next(model.parameters())
+def evaluate(model, eval_loader: DataLoader):
     was_training = model.training
     model.eval()
-    data_loader = DataLoader(
-        eval_loader,
-        1,
-    )
 
     result = EvalResult()
 
     try:
         with torch.inference_mode():
-            for x, y, _ in data_loader:
+            for x, y, seed in eval_loader:
                 prediction = model(x)
-
-                result.measure(x, prediction, y)
+                result.measure(x, prediction, y, seed)
     finally:
         model.train(was_training)
 

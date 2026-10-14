@@ -1,47 +1,38 @@
 from torch.utils.data import DataLoader
-import torch.nn as nn
 import torch
 
-from config import TrainConfig
+from train_config import TrainConfig
 from .model import Demosaicer
-from learning.dataset import RawDataset, SingleImageDataset
 from .result import TrainResult
-from.loss import reconstruction_loss
-
-from debug import start, stop, reset
+from .loss import reconstruction_loss
 
 
-def train(config: TrainConfig):
-    # Initialize dataset
-    data_set = SingleImageDataset(config) if config.single_image else RawDataset(config)
-    data_loader = DataLoader(
-        data_set,
-        config.batch_size,
-    )
-
+def train_default(
+    data_loader: DataLoader, config: TrainConfig, model: Demosaicer | None = None
+):
     # Initialize model and device target
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
+    # Set manual seed for random values in torch if available
     if config.training_seed is not None:
         torch.manual_seed(config.training_seed)
-    model = Demosaicer().to(device)
+
+    # If model is not explicitly given, create it; set device and training mode.
+    if model is None:
+        model = Demosaicer()
+    model = model.to(device)
     model.train()
 
     # Initialize optimizer and loss function
     optimizer = torch.optim.Adam(model.parameters(), config.learning_rate)
     loss_function = reconstruction_loss
-    # loss_function = nn.L1Loss()
 
+    # Create train result
     result = TrainResult()
-
-    # reset()
-
     for _ in range(config.epoch_num):
-        # batch = 1
-        # start("Generate images for batch 1")
+        batch = 1
         for x, y, seed in data_loader:
-            # stop()
-            # start(f"Batch {batch}")
-            # batch += 1
+            batch += 1
 
             x = x.to(device=device, dtype=torch.float32)
             y = y.to(device=device, dtype=torch.float32)
@@ -51,7 +42,8 @@ def train(config: TrainConfig):
             # Make prediction
             prediction = model(x)
             # Calculate distance from correct answer
-            loss = loss_function(prediction, y)
+            loss = loss_function(prediction, y, 3.0)
+            # Measure result
             with torch.no_grad():
                 result.measure(x, prediction, y)
             # Calculate loss gradient
@@ -59,9 +51,7 @@ def train(config: TrainConfig):
             # Step the optimizer toward the correct answer
             optimizer.step()
 
-            # stop()
-            config.update_run(seed, x.shape[0], None, config.image_generation_version)
-            # start(f"Generate Images for batch {batch}")
+            # Yield progress
+            yield model, result, config
 
     return model, result, config
-

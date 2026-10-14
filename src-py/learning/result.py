@@ -1,3 +1,6 @@
+from pathlib import Path
+import json
+
 import torch
 import matplotlib.pyplot as plt
 import numpy as np
@@ -6,14 +9,30 @@ from generate_image.generate import to_HWC
 
 
 class TrainResult:
-    def __init__(self):
-        self._loss = []
+    def __init__(self, info: dict | None = None) -> None:
+        info = {k: v for k, v in (info or {}).items() if v is not None}
+        self._loss = info.get("loss", [])
 
     def measure(self, input, prediction, answer):
         self._loss.append((prediction - answer).abs().mean().item())
 
     def get_loss(self):
         return self._loss
+
+    @staticmethod
+    def load(path: str) -> "TrainResult | None":
+        try:
+            path_obj = Path(path)
+        except:
+            return None
+        if not path_obj.exists() or not path_obj.is_file():
+            return None
+
+        with open(path_obj, "r", encoding="utf-8") as f:
+            return TrainResult(json.load(f))
+
+    def to_dict(self):
+        return {"loss": self._loss}
 
 
 class EvalResult:
@@ -30,7 +49,7 @@ class EvalResult:
     def add_train_result(self, result: TrainResult | None):
         self._train_result = result
 
-    def measure(self, input, prediction, answer):
+    def measure(self, input, prediction, answer, seed):
         loss = (prediction - answer).abs().mean().item()
         self._loss.append(loss)
 
@@ -54,6 +73,7 @@ class EvalResult:
                         "input": input[i].detach().cpu().numpy(),
                         "prediction": prediction[i].detach().cpu().numpy(),
                         "target": answer[i].detach().cpu().numpy(),
+                        "seed": seed,
                     }
                 )
                 self._worst_predictions.sort(key=lambda image: image["psnr"])
@@ -114,13 +134,15 @@ class EvalResult:
             worst_prediction_plot[i][3].imshow(difference)
             worst_prediction_plot[i][3].set_axis_off()
 
+            print(pred.get("seed"))
+
         loss_stats = top_right.subplots(2, 3)
 
         values = [
             (self.mean_mae_rgb()[0], "Red MAE"),
             (self.mean_mae_rgb()[1], "Green MAE"),
             (self.mean_mae_rgb()[2], "Blue MAE"),
-            (self.mean_mae(), "Overall MAE")
+            (self.mean_mae(), "Overall MAE"),
         ]
         for ax, (value, title) in zip(loss_stats.flatten(), values):
             ax.text(
