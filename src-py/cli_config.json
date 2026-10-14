@@ -1,0 +1,32 @@
+{
+	"training_run_destination": "C:\\Users\\mbowl\\File Sync\\projects\\ml-demosaicer\\src-py\\training_runs",
+	"default_train_config": {
+		"image_width": 32,
+		"image_height": 32,
+		"seed_range_start": 0,
+		"seed_range_end": 999999999,
+		"learning_rate": 0.0005,
+		"batch_size": 5,
+		"batch_num": 1000,
+		"epoch_num": 1,
+		"image_generation_version": 1,
+		"weight_seed": "",
+		"single_image": false,
+		"single_image_config": {
+			"image_seed": 1000000565
+		}
+	},
+	"default_eval_config": {
+		"image_width": 32,
+		"image_height": 32,
+		"seed_range_start": 1000000000,
+		"seed_range_end": 1999999999,
+		"images_per_seed": 1,
+		"num_images": 1000,
+		"image_generation_version": 1,
+		"single_image": false,
+		"single_image_config": {
+			"image_seed": 1000000565
+		}
+	}
+}
