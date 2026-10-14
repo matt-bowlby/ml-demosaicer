@@ -3,7 +3,9 @@ from numpy.random import Generator
 
 from .v1.generate_image import generate_image as generate_image_v1
 
-def generate_image(rng: Generator, width: int, height: int, version: int) -> np.ndarray:
+def generate_image(rng: Generator | None, width: int, height: int, version: int) -> np.ndarray:
+    if rng is None:
+        rng = np.random.default_rng()
     img = None
     match version:
         case 1:
