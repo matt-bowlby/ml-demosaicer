@@ -13,3 +13,5 @@ wheels/
 *.pt
 
 temp/
+
+training_runs/
