@@ -763,7 +763,7 @@ wheels = [
 ]
 
 [[package]]
-name = "src-py"
+name = "ml-demosaicer"
 version = "0.1.0"
 source = { virtual = "." }
 dependencies = [

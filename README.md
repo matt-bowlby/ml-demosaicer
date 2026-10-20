@@ -16,7 +16,7 @@ in your desired parent folder, run the following:
 
 ### Install Dependencies
 
-Run the following from inside `src-py`:
+Run the following from inside the project directory:
 
 `uv sync`
 
@@ -24,7 +24,7 @@ Dependencies should install.
 
 ### Run the Project
 
-From inside of `src-py`, run the following command after dependencies have installed:
+From inside of the project directory, run the following command after dependencies have installed:
 
 `uv run main.py`
 
@@ -117,4 +117,4 @@ If I ever come back to this project, these are the various improvements I would 
 2. **Add GAN to the training repertoire:** I've done what I can to optimize for edge preservation, but the reality of imperfection still bears heavy on me. The next step would be to implement an independent adversarial classification network to help teach the generation model a lesson (in a good way.)
 3. **Scale up to full-size images:** Obviously, modern cameras take photos at a resolution larger than 32x32. This was the resolution I was working with in order to make debugging the model much quicker (and to save on my electricity bill), but the long-term plan was always to scale up. Technically, it already *can* be scaled up, but training would take *weeks to months* as improvement #1 has not been implemented yet.
 4. **Train on more data:** It might be hard to believe, but I found through experimentation that as you trained on more data, the model's performance actually improved! I can foresee a potential future in which improvement 2 is not necessary, and all it needs is just to see millions-to-billions of images. Once again, testing of this is bottle-necked by improvement #1.
-5. **Native Rust Implementation:** Once the final model weights are reached, I was planning on running the model in rust for ultra-fast demosaicing and packaging it as a rust crate (Hence the empty src-rs rust project.)
+5. **Native Rust Implementation:** Once the final model weights are reached, I was planning on running the model in rust for ultra-fast demosaicing and packaging it as a rust crate.

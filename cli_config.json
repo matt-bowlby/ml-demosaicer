@@ -1,5 +1,5 @@
 {
-	"training_run_destination": "C:\\Users\\mbowl\\File Sync\\projects\\ml-demosaicer\\src-py\\training_runs",
+	"training_run_destination": "C:\\Users\\mbowl\\File Sync\\projects\\ml-demosaicer\\training_runs",
 	"default_train_config": {
 		"image_width": 32,
 		"image_height": 32,
