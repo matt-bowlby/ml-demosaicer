@@ -1,6 +1,7 @@
 from typing import Literal
-import numpy as np
 import torch
+
+from device import device
 
 MaskType = Literal["RGGB", "BGGR", "GRBG", "GBRG", "X-Trans"]
 
@@ -13,7 +14,7 @@ _PATTERNS = {
 }
 
 def mask_image(
-    image: np.ndarray | torch.Tensor, channel: Literal["r", "g", "b"], masktype: MaskType
+    image: torch.Tensor, channel: Literal["r", "g", "b"], masktype: MaskType
 ) -> torch.Tensor:
     """Keep sampled pixels of a channel, preserving any batch dimension.
 
@@ -23,18 +24,9 @@ def mask_image(
     Other pixels are zero. Preserve the input dtype without modifying the input.
     Pattern tiles (including the 6x6 X-Trans tile above) start at the top-left.
     """
-    if image.ndim not in (3, 4) or image.shape[-3] != 3:
-        raise ValueError(
-            "RGB image must have shape (3, height, width) or (N, 3, height, width)."
-        )
-    if channel not in ("r", "g", "b"):
-        raise ValueError("Channel must be 'r', 'g', or 'b'.")
-    if masktype not in _PATTERNS:
-        raise ValueError(f"Invalid mask type: {masktype!r}.")
-
     index = ("r", "g", "b").index(channel)
     source = torch.as_tensor(image)[..., index : index + 1, :, :]
-    result = torch.zeros_like(source)
+    result = torch.zeros_like(source, dtype=torch.float32, device=device)
     pattern = _PATTERNS[masktype]
     tile_height, tile_width = len(pattern), len(pattern[0])
     for row, colors in enumerate(pattern):

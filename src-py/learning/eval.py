@@ -8,31 +8,32 @@ from generate_image.generate import to_HWC
 from .result import EvalResult
 
 
-def predict(model, bayer_mosaic: np.ndarray, answer: np.ndarray, display: bool = True) -> np.ndarray:
+def predict(model, mosaic: torch.Tensor, answer: torch.Tensor, display: bool = True) -> torch.Tensor:
     model.eval()
-    parameter = next(model.parameters())
-    mosaic = torch.as_tensor(
-        bayer_mosaic, dtype=parameter.dtype, device=parameter.device
-    ).unsqueeze(0)
 
     with torch.no_grad():
-        img = to_HWC(model(mosaic).squeeze(0).cpu().numpy())
+        prediction_img = to_HWC(model(mosaic.unsqueeze(0)).squeeze(0))
+        mosaic_img = to_HWC(mosaic)
+        answer_img = to_HWC(answer)
+        compare_img = compare(prediction_img, answer_img).detach().cpu()
+        prediction_img = prediction_img.detach().cpu()
+        mosaic_img = mosaic.detach().cpu()
+        answer_img = answer_img.detach().cpu()
 
         if display:
             fig, axes = plt.subplots(2, 2)
             fig.suptitle("Model output comparison")
             axes = axes.flatten()
 
-            axes[0].imshow(to_HWC(bayer_mosaic), interpolation="nearest")
+            axes[0].imshow(mosaic_img, interpolation="nearest")
             axes[0].set_title("Bayer Mosaic")
 
-            axes[1].imshow(to_HWC(answer), interpolation="nearest")
+            axes[1].imshow(answer_img, interpolation="nearest")
             axes[1].set_title("Answer")
 
-            axes[2].imshow(img, interpolation="nearest")
+            axes[2].imshow(prediction_img, interpolation="nearest")
             axes[2].set_title("Model's guess")
 
-            compare_img = compare(img, to_HWC(answer))
             axes[3].imshow(compare_img, interpolation="nearest")
             axes[3].set_title("Difference * 10")
 
@@ -42,12 +43,12 @@ def predict(model, bayer_mosaic: np.ndarray, answer: np.ndarray, display: bool =
             plt.tight_layout()
             plt.show()
 
-        return img
+        return prediction_img
 
 
-def compare(a, b) -> np.ndarray:
-    error_vis = np.abs(a - b) * 10
-    return np.clip(error_vis, 0, 1)
+def compare(a, b) -> torch.Tensor:
+    error_vis = torch.abs(a - b) * 10
+    return torch.clip(error_vis, 0, 1)
 
 
 def evaluate(model, eval_loader: DataLoader):

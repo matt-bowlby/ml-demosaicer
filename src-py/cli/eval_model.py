@@ -1,9 +1,9 @@
 from pathlib import Path
-import numpy as np
 import torch
 
 from learning import evaluate, predict, create_eval_data_loader, Demosaicer, TrainResult
-from generate_image import generate_image, bayer_mosaic
+from generate_image import RandomStreams, generate_image, bayer_mosaic
+from device import device
 
 from .cli_config import CliConfig
 from .menu import menu
@@ -40,17 +40,16 @@ def eval_model(cli_config: CliConfig):
         break
 
     weights = torch.load(model_path, map_location="cpu", weights_only=True)
-    model = Demosaicer()
+    model = Demosaicer().to(device)
     model.load_state_dict(weights)
 
     config = input_eval_config(cli_config.default_eval_config)
-    loader = create_eval_data_loader(config)
-    result = evaluate(model, loader)
+    result = evaluate(model, create_eval_data_loader(config))
+
     evaluation_choice = menu(
         "How would you like to evaluate the dataset?",
         ["Show statistics", "Random samples", "None"],
     )
-
     match evaluation_choice:
         case 1:
             train = TrainResult.load(str(result_path))
@@ -58,11 +57,11 @@ def eval_model(cli_config: CliConfig):
             result.visualize()
         case 2:
             while True:
-                rng = np.random.default_rng()
+                rng = RandomStreams.from_seed()
                 image = generate_image(rng, config.image_width, config.image_height, config.image_generation_version)
                 mosaic = bayer_mosaic(image, "RGGB")
                 predict(model, mosaic, image)
-                print("Enter q to quit:")
+                print("Enter q to quit, or anything else to show another image:")
                 answer = input("> ").strip().lower()
                 if answer == "q":
                     break

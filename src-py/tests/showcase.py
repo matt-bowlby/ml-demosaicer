@@ -1,5 +1,8 @@
 """Visual smoke tests: run main.py, or python -m generate_image.showcase --no-show."""
 
+from generate_image import RandomStreams
+import torch
+from device import device
 import argparse
 from collections import Counter
 
@@ -69,7 +72,7 @@ def show_shape_tests(show: bool = True) -> None:
     for name, description, parameters in cases:
         arguments = dict(parameters)
         center = (arguments.pop("x", 128), arguments.pop("y", 128))
-        img = getattr(shapes, name)(**arguments)
+        img = getattr(shapes, name)(**arguments).cpu().numpy()
         label = f"{name}: {description}"
         assert img.ndim == 3 and img.shape[2] == 1, f"{label}: unexpected shape"
         assert img.dtype == np.float32, f"{label}: unexpected dtype"
@@ -149,14 +152,14 @@ def show_fill_tests(show: bool = True) -> None:
     assert set(counts) == public_fills, "Update showcase cases to cover every fill"
     assert all(count >= 2 for count in counts.values())
 
-    mask = shapes.square(radius=140, angle=0)
+    mask = shapes.square(radius=140, angle=0).cpu().numpy()
     box_height, box_width = mask.shape[:2]
     results = []
     for name, description, parameters in cases:
         arguments = dict(width=box_width, height=box_height, **parameters)
         if name == "noise":
-            arguments["rng"] = np.random.default_rng(arguments.pop("seed"))
-        fill = getattr(fills, name)(**arguments)
+            arguments["rng"] = RandomStreams.from_seed(arguments.pop("seed"))
+        fill = getattr(fills, name)(**arguments).cpu().numpy()
         label = f"{name}: {description}"
         assert fill.shape == (box_height, box_width, 3), f"{label}: unexpected shape"
         assert fill.dtype == np.float32, f"{label}: unexpected dtype"
@@ -169,8 +172,8 @@ def show_fill_tests(show: bool = True) -> None:
         if name in {"noise", "smooth_noise"}:
             repeat = dict(arguments)
             if name == "noise":
-                repeat["rng"] = np.random.default_rng(parameters["seed"])
-            assert np.array_equal(fill, getattr(fills, name)(**repeat)), f"{label}: seed is not reproducible"
+                repeat["rng"] = RandomStreams.from_seed(parameters["seed"])
+            assert np.array_equal(fill, getattr(fills, name)(**repeat).cpu().numpy()), f"{label}: seed is not reproducible"
         img = fill * mask + np.float32(0.15) * (1 - mask)
         results.append((label, img))
 
